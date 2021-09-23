@@ -1,0 +1,10 @@
+[package]
+name = "fides"
+version = "0.1.0"
+edition = "2018"
+license = "MIT"
+description = "Fides is a Rust library for ECDSA signatures on curve secp256k1."
+repository = "https://github.com/seg-software/rust-fides"
+readme = "README.md"
+
+[dependencies]

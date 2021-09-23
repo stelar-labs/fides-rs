@@ -1,2 +1,3 @@
-# rust-fides
+# Rust Fides
+
 A Digital Signature Library.
