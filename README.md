@@ -1,3 +1,3 @@
 # Rust Fides
 
-A Digital Signature Library.
+Fides is a Rust library for ECDSA signatures on curve secp256k1.
