@@ -19,7 +19,7 @@ In your `Cargo.toml`:
 ```
 
 [dependencies]
-fides = "0.3.0"
+fides = "0.4.0"
 
 ```
 
@@ -53,8 +53,32 @@ let plain: Vec<u8> = decrypt(&key, &cipher);
 ```
 
 `Asymmetric Private Key Generation`
+```
+
+use fides::asymmetric::private_key;
+
+let priv_key: [u8;32] = private_key();
+
+```
+
 `Asymmetric Public Key Generation`
+```
+
+use fides::asymmetric::public_key;
+
+let pub_key: [u8;32] = public_key(&priv_key);
+
+```
+
 `Asymmetric Shared Key Generation`
+```
+
+use fides::asymmetric::shared_key;
+
+let sh_key: [u8;32] = shared_key(&priv_key, &pub_key);
+
+```
+
 `Asymmetric Message Signing`
 `Asymmetric Message Verification`
 
