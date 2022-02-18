@@ -1,8 +1,8 @@
-use blake3;
-
 pub mod asymmetric;
 pub mod symmetric;
 
-pub fn hash(input: &Vec<u8>) -> Vec<u8> {
-    blake3::hash(input).as_bytes().to_vec()
+use blake3;
+
+pub fn hash(input: &Vec<u8>) -> [u8;32] {
+    * blake3::hash(input).as_bytes()
 }
