@@ -1,7 +1,5 @@
-use crate::hash;
 use rand::{RngCore, rngs::OsRng};
 use ed25519_dalek::{ Keypair, PublicKey, Verifier, SecretKey, Signature, Signer };
-use x25519_dalek;
 
 pub fn private_key() -> [u8; 32] {
 
@@ -31,14 +29,6 @@ pub fn public_key(priv_key: &[u8;32]) -> [u8;32] {
     let public_key: PublicKey = PublicKey::from(&private_key);
 
     public_key.to_bytes()
-
-}
-
-pub fn shared_key(priv_key: &[u8;32], pub_key: &[u8;32]) -> [u8;32] {
-
-    let shared_point = x25519_dalek::x25519(*priv_key, *pub_key);
-
-    hash(&shared_point.to_vec())
 
 }
 

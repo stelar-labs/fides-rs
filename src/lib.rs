@@ -1,5 +1,6 @@
-pub mod asymmetric;
-pub mod symmetric;
+pub mod ed25519;
+pub mod x25519;
+pub mod chacha20poly1305;
 
 use blake3;
 
