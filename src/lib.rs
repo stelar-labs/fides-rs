@@ -8,7 +8,7 @@ pub fn hash(input: &Vec<u8>) -> [u8;32] {
     * blake3::hash(input).as_bytes()
 }
 
-pub fn merkle_root(objects: Vec<Vec<u8>>) -> [u8; 32] {
+pub fn merkle_root(objects: &Vec<Vec<u8>>) -> [u8; 32] {
 
     let mut hashes: Vec<[u8; 32]> = objects
         .iter()
