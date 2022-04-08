@@ -40,7 +40,7 @@ let key: [u8; 32] = hash(&"password".as_bytes());
 
 let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &message).unwrap();
 
-let plain: Vec<u8> = decrypt(&key, &cipher).unwrap();
+let plain: Vec<u8> = chacha20poly1305::decrypt(&key, &cipher).unwrap();
 ```
 
 ### Ed25519
