@@ -9,11 +9,11 @@ In your `Cargo.toml`:
 ```
 
 [dependencies]
-fides = "2.1.1"
+fides = "2.2.0"
 
 ```
 
-In your module:
+In your `module.rs`:
 
 ```
 
@@ -34,11 +34,13 @@ let blake3_hash: [u8;32] = hash(&bytes);
 ### ChaCha20Poly1305
 
 ```
+let message: Vec<u8>;
+
 let key: [u8; 32] = hash(&"password".as_bytes());
 
-let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &msg);
+let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &message).unwrap();
 
-let plain: Vec<u8> = decrypt(&key, &cipher);
+let plain: Vec<u8> = decrypt(&key, &cipher).unwrap();
 ```
 
 ### Ed25519

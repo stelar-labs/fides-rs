@@ -32,7 +32,9 @@ pub fn public_key(priv_key: &[u8;32]) -> [u8;32] {
 
 }
 
-pub fn sign(message: &[u8; 32], priv_key: &[u8; 32], pub_key: &[u8; 32]) -> [u8;64] {
+pub fn sign(message: &[u8; 32], priv_key: &[u8; 32]) -> [u8;64] {
+
+    let pub_key = public_key(priv_key);
 
     let key_pair_bytes: Vec<u8> = [priv_key.to_vec(), pub_key.to_vec()].concat();
 
