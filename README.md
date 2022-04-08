@@ -1,6 +1,6 @@
 # Fides
 
-Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions written in Rust.
+Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions.
 
 ## Usage
 
@@ -9,7 +9,7 @@ In your `Cargo.toml`:
 ```
 
 [dependencies]
-fides = "2.0.0"
+fides = "2.1.1"
 
 ```
 
@@ -49,6 +49,8 @@ let priv_key: [u8;32] = ed25519::private_key();
 let pub_key: [u8;32] = ed25519::public_key(&priv_key);
 
 let signature: [u8; 64] = sign(&message, &priv_key, &pub_key);
+
+let verification: bool = x25519::verify(&message, &public_key, &signature);
 ```
 
 ### x25519
@@ -59,8 +61,6 @@ let priv_key: [u8;32] = x25519::private_key();
 let pub_key: [u8;32] = x25519::public_key(&priv_key);
 
 let shared_secret_key: [u8;32] = x25519::shared_key(&priv_key, &other_party_pub_key);
-
-let verification: bool = x25519::verify(&message, &signer_public_key, &signature);
 ```
 
 ### Merkle Tree
