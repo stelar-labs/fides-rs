@@ -1,20 +1,8 @@
-## Fides
+# Fides
 
-Fides is a wrapper for hashing with blake3, asymmetric cryptography on curve 25519 and symmetric cryptography with chacha20poly1305 written in Rust.
+Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions written in Rust.
 
-### Features
-- Blake3 Hashing.
-- ChaCha20Poly1305 Encryption.
-- ChaCha20Poly1305 Decryption.
-- Ed25519 Private Key Generation.
-- Ed25519 Public Key Generation.
-- Ed25519 Message Signing.
-- Ed25519 Message Verification.
-- x25519 Private Key Generation.
-- x25519 Public Key Generation.
-- x25519 Shared Key Generation.
-
-### Usage
+## Usage
 
 In your `Cargo.toml`:
 
@@ -25,83 +13,66 @@ fides = "2.0.0"
 
 ```
 
-### API
+In your module:
 
-`Hashing`
 ```
 
-use fides::hash;
+use fides::{chacha20poly1305, ed25519, hash, merkle_root, x25519};
+
+```
+
+## API
+
+### Hashing
+
+```
+let bytes: Vec<u8>;
 
 let blake3_hash: [u8;32] = hash(&bytes);
-
 ```
 
-`Symmetric Encryption`
-```
-
-use fides::chacha20poly1305::encrypt;
-
-let cipher: Vec<u8> = encrypt(&key, &msg);
+### ChaCha20Poly1305
 
 ```
+let key: [u8; 32] = hash(&"password".as_bytes());
 
-`Symmetric Decryption`
-```
-
-use fides::chacha20poly1305::decrypt;
+let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &msg);
 
 let plain: Vec<u8> = decrypt(&key, &cipher);
-
 ```
 
-`Asymmetric Private Key Generation`
-```
-
-use fides::Ed25519::private_key;
-
-let priv_key: [u8;32] = private_key();
+### Ed25519
 
 ```
+let priv_key: [u8;32] = ed25519::private_key();
 
-`Asymmetric Public Key Generation`
-```
-
-use fides::Ed25519::public_key;
-
-let pub_key: [u8;32] = public_key(&priv_key);
-
-```
-
-`Asymmetric Shared Key Generation`
-```
-
-use fides::x25519::shared_key;
-
-let shared_secret_key: [u8;32] = shared_key(&priv_key, &other_party_pub_key);
-
-```
-
-`Asymmetric Message Signing`
-
-```
-
-use fides::Ed25519::sign;
+let pub_key: [u8;32] = ed25519::public_key(&priv_key);
 
 let signature: [u8; 64] = sign(&message, &priv_key, &pub_key);
-
 ```
 
-`Asymmetric Message Verification`
+### x25519
 
 ```
+let priv_key: [u8;32] = x25519::private_key();
 
-use fides::Ed25519::verify;
+let pub_key: [u8;32] = x25519::public_key(&priv_key);
 
-let verification: bool = verify(&message, &signer_public_key, &signature);
+let shared_secret_key: [u8;32] = x25519::shared_key(&priv_key, &other_party_pub_key);
 
+let verification: bool = x25519::verify(&message, &signer_public_key, &signature);
 ```
 
-### Contribution
+### Merkle Tree
+
+```
+let objects: Vec<Vec<u8>>;
+
+let root: [u8; 32] = merkle_root(&objects);
+```
+
+## Contribution
+
 Pull requests, bug reports and any kind of suggestion are welcome.
 
-2022-02-26
+2022-04-08

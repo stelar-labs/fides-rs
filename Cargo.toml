@@ -1,9 +1,9 @@
 [package]
 name = "fides"
-version = "2.0.0"
-edition = "2018"
+version = "2.1.0"
+edition = "2021"
 license = "MIT"
-description = "Fides is a wrapper for hashing with blake3, asymmetric cryptography on curve 25519 and symmetric cryptography with chacha20poly1305 written in Rust."
+description = "Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions written in Rust."
 repository = "https://github.com/stelar-software/rust-fides"
 readme = "README.md"
 
