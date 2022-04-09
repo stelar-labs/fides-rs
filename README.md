@@ -9,7 +9,7 @@ In your `Cargo.toml`:
 ```
 
 [dependencies]
-fides = "2.2.0"
+fides = "2.2.1"
 
 ```
 
@@ -48,11 +48,11 @@ let plain: Vec<u8> = chacha20poly1305::decrypt(&key, &cipher).unwrap();
 ```
 let priv_key: [u8;32] = ed25519::private_key();
 
+let signature: [u8; 64] = ed25519::sign(&message, &priv_key);
+
 let pub_key: [u8;32] = ed25519::public_key(&priv_key);
 
-let signature: [u8; 64] = sign(&message, &priv_key, &pub_key);
-
-let verification: bool = x25519::verify(&message, &public_key, &signature);
+let verification: bool = ed25519::verify(&message, &pub_key, &signature);
 ```
 
 ### x25519
@@ -77,4 +77,4 @@ let root: [u8; 32] = merkle_root(&objects);
 
 Pull requests, bug reports and any kind of suggestion are welcome.
 
-2022-04-08
+2022-04-09
