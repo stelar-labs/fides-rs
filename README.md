@@ -6,46 +6,42 @@ Fides is a library for hashing with blake3, asymmetric cryptography on curve 255
 
 In your `Cargo.toml`:
 
-```
-
+```text
 [dependencies]
-fides = "2.2.1"
-
+fides = "2.3.0"
 ```
 
 In your `module.rs`:
 
-```
-
-use fides::{chacha20poly1305, ed25519, hash, merkle_root, x25519};
-
+```text
+use fides::{ chacha20poly1305, ed25519, hash, merkle_root, x25519 };
 ```
 
 ## API
 
 ### Hashing
 
-```
-let bytes: Vec<u8>;
+```text
+let object: Vec<u8>;
 
-let blake3_hash: [u8;32] = hash(&bytes);
+let object_hash = hash(&object[..]);
 ```
 
 ### ChaCha20Poly1305
 
-```
+```text
 let message: Vec<u8>;
 
 let key: [u8; 32] = hash(&"password".as_bytes());
 
-let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &message).unwrap();
+let cipher: Vec<u8> = chacha20poly1305::encrypt(&key, &message[..])?;
 
-let plain: Vec<u8> = chacha20poly1305::decrypt(&key, &cipher).unwrap();
+let plain: Vec<u8> = chacha20poly1305::decrypt(&key, &cipher[..])?;
 ```
 
 ### Ed25519
 
-```
+```text
 let priv_key: [u8;32] = ed25519::private_key();
 
 let signature: [u8; 64] = ed25519::sign(&message, &priv_key);
@@ -57,7 +53,7 @@ let verification: bool = ed25519::verify(&message, &pub_key, &signature);
 
 ### x25519
 
-```
+```text
 let priv_key: [u8;32] = x25519::private_key();
 
 let pub_key: [u8;32] = x25519::public_key(&priv_key);
@@ -67,14 +63,14 @@ let shared_secret_key: [u8;32] = x25519::shared_key(&priv_key, &other_party_pub_
 
 ### Merkle Tree
 
-```
-let objects: Vec<Vec<u8>>;
+```text
+let hashes: Vec<[u8; 32]>;
 
-let root: [u8; 32] = merkle_root(&objects);
+let root = merkle_root(hashes);
 ```
 
 ## Contribution
 
 Pull requests, bug reports and any kind of suggestion are welcome.
 
-2022-04-09
+2022-04-29

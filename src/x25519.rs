@@ -28,6 +28,6 @@ pub fn shared_key(priv_key: &[u8; 32], pub_key: &[u8; 32]) -> [u8; 32] {
 
     let shared_point: [u8; 32] = x25519(*priv_key, *pub_key);
 
-    hash(&shared_point.to_vec())
+    hash(&shared_point[..])
 
 }

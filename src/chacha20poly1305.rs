@@ -3,7 +3,7 @@ use chacha20poly1305::aead::{Aead, NewAead};
 use rand::{RngCore, rngs::OsRng};
 use std::error::Error;
 
-pub fn encrypt(key: &[u8;32], plain_msg: &Vec<u8>) -> Result<Vec<u8>, Box::<dyn Error>> {
+pub fn encrypt(key: &[u8;32], message: &[u8]) -> Result<Vec<u8>, Box::<dyn Error>> {
     
     let key = Key::from_slice(key);
     
@@ -13,24 +13,30 @@ pub fn encrypt(key: &[u8;32], plain_msg: &Vec<u8>) -> Result<Vec<u8>, Box::<dyn 
 
     OsRng.fill_bytes(&mut nonce);
 
-    match cipher.encrypt(Nonce::from_slice(&nonce), plain_msg.as_ref()) {
-        Ok(r) => Ok([nonce, r].concat()),
+    match cipher.encrypt(Nonce::from_slice(&nonce), message) {
+
+        Ok(encrypted) => Ok([nonce, encrypted].concat()),
+
         Err(_) => Err("Encryption failure!")?
+
     }
 
 }
 
-pub fn decrypt(key: &[u8;32], cipher_msg: &Vec<u8>) -> Result<Vec<u8>, Box::<dyn Error>> {
+pub fn decrypt(key: &[u8;32], encrypted: &[u8]) -> Result<Vec<u8>, Box::<dyn Error>> {
 
     let key = Key::from_slice(key);
     
     let cipher = ChaCha20Poly1305::new(key);
 
-    let nonce = Nonce::from_slice(&cipher_msg[..12]);
+    let nonce = Nonce::from_slice(&encrypted[..12]);
 
-    match cipher.decrypt(nonce, cipher_msg[12..].as_ref()) {
-        Ok(r) => Ok(r),
+    match cipher.decrypt(nonce, encrypted[12..].as_ref()) {
+
+        Ok(decrypted) => Ok(decrypted),
+        
         Err(_) => Err("Decryption failure!")?
+    
     }
 
 }

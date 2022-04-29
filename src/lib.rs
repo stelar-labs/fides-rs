@@ -1,25 +1,17 @@
+pub mod chacha20poly1305;
 pub mod ed25519;
 pub mod x25519;
-pub mod chacha20poly1305;
-
 use blake3;
 
-pub fn hash(input: &Vec<u8>) -> [u8;32] {
+pub fn hash(input: &[u8]) -> [u8;32] {
     * blake3::hash(input).as_bytes()
 }
 
-pub fn merkle_root(objects: &Vec<Vec<u8>>) -> [u8; 32] {
+pub fn merkle_root(mut hashes: Vec<[u8; 32]>) -> [u8; 32] {
 
-    let mut hashes: Vec<[u8; 32]> = objects
-        .iter()
-        .map(|x| hash(x))
-        .collect();
+	let mut result = [0_u8; 32];
 
-	if hashes.is_empty() {
-
-		[0_u8; 32]
-
-	} else {
+	if !hashes.is_empty() {
 
 		if hashes.len() % 2 != 0 {
             
@@ -33,20 +25,30 @@ pub fn merkle_root(objects: &Vec<Vec<u8>>) -> [u8; 32] {
 
 			let mut inter: Vec<[u8; 32]> = Vec::new();
 
-			for h in &hashes {
+			for h in hashes {
 				
-				inter.push(*h);
+				inter.push(h);
 				
 				if inter.len() == 2 {
+
+					let joined_hashes = [inter[0], inter[1]].concat();
 						
-                    cache.push(hash(&[inter[0].to_vec(), inter[1].to_vec()].concat()));
+                    cache.push(hash(&joined_hashes[..]));
 
                     inter.clear()
 
 				}
+
 			}
+
 			hashes = cache
+
 		};
-		hashes[0]
+
+		result = hashes[0]
+
 	}
+
+	result
+
 }

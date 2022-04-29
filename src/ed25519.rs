@@ -1,5 +1,5 @@
-use rand::{RngCore, rngs::OsRng};
 use ed25519_dalek::{ Keypair, PublicKey, Verifier, SecretKey, Signature, Signer };
+use rand::{ RngCore, rngs::OsRng };
 
 pub fn private_key() -> [u8; 32] {
 
@@ -12,8 +12,11 @@ pub fn private_key() -> [u8; 32] {
     while private_key == [0_u8; 32] {
     
         match SecretKey::from_bytes(&key) {
+
             Ok(r) => private_key = r.to_bytes(),
+
             Err(_) => OsRng.fill_bytes(&mut key)
+
         }
 
     }
@@ -53,8 +56,11 @@ pub fn verify(message: &[u8;32], pub_key: &[u8;32], sig: &[u8;64]) -> bool {
     let signature: Signature = Signature::from_bytes(sig).unwrap();
 
     match public_key.verify(message, &signature) {
+
         Ok(_) => true,
+        
         Err(_) => false
+    
     }
 
 }
