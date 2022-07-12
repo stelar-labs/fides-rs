@@ -1,6 +1,6 @@
 # Fides
 
-Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions.
+Fides is a cryptographic library for public key exchange, digital signatures, encryption, accumulation, hashing and zero knowledge proofs.
 
 ## Usage
 
@@ -8,7 +8,7 @@ In your `Cargo.toml`:
 
 ```text
 [dependencies]
-fides = "2.3.0"
+fides = "3.0.0"
 ```
 
 In your `module.rs`:
@@ -16,6 +16,20 @@ In your `module.rs`:
 ```text
 use fides::{ chacha20poly1305, ed25519, hash, merkle_root, x25519 };
 ```
+
+## Features
+
+| Type | Technology | Implementation |
+|---|---|---|
+| Public Key Exchange | Elliptic Curve | x25519 |
+| | Lattices | Kyber-768 |
+| Digital Signatures | Elliptic Curve | Ed25519 |
+| | Lattices | Dilithium3 |
+| Encryption | | chacha20poly1305 |
+| Accumulators | Merkle Trees | Root |
+| | Bloom Filters | Create, Insert, Search |
+| Hashing | | Blake3 |
+| Zero Knowledge | | Bulletproofs |
 
 ## API
 
@@ -69,8 +83,4 @@ let hashes: Vec<[u8; 32]>;
 let root = merkle_root(hashes);
 ```
 
-## Contribution
-
-Pull requests, bug reports and any kind of suggestion are welcome.
-
-2022-04-29
+2022-07-12
