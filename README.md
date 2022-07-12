@@ -2,24 +2,9 @@
 
 Fides is a cryptographic library for public key exchange, digital signatures, encryption, accumulation, hashing and zero knowledge proofs.
 
-## Usage
-
-In your `Cargo.toml`:
-
-```text
-[dependencies]
-fides = "3.0.0"
-```
-
-In your `module.rs`:
-
-```text
-use fides::{ chacha20poly1305, ed25519, hash, merkle_root, x25519 };
-```
-
 ## Features
 
-| Type | Technology | Implementation |
+| Type | Technology | Algorithm |
 |---|---|---|
 | Public Key Exchange | Elliptic Curve | x25519 |
 | | Lattices | Kyber-768 |
@@ -30,6 +15,7 @@ use fides::{ chacha20poly1305, ed25519, hash, merkle_root, x25519 };
 | | Bloom Filters | Create, Insert, Search |
 | Hashing | | Blake3 |
 | Zero Knowledge | | Bulletproofs |
+| Verifiable Delay Function | | |
 
 ## API
 
