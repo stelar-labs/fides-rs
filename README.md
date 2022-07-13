@@ -16,4 +16,4 @@ Fides is a library for cryptographic primitives.
 | Hashing | | Blake3 |
 | Proof System | | PLONK |
 
-2022-07-12
+2022-07-13
