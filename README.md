@@ -5,7 +5,7 @@ Fides is a library for cryptographic primitives.
 ## Features
 
 | Type | Algorithm |
-|---|---|---|
+|---|---|
 | Public Key Exchange | x25519 |
 | | Kyber-768 |
 | Digital Signatures | Ed25519 |
