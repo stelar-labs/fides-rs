@@ -1,10 +1,10 @@
 [package]
 name = "fides"
-version = "2.3.0"
+version = "3.0.0"
 edition = "2021"
 license = "MIT"
-description = "Fides is a library for hashing with blake3, asymmetric cryptography on curve 25519, symmetric cryptography with chacha20poly1305 and merkle tree functions."
-repository = "https://github.com/stelar-software/rust-fides"
+description = "Fides is a library for cryptographic primitives."
+repository = "https://github.com/stelar-labs/fides-rs"
 readme = "README.md"
 
 [dependencies]
@@ -14,3 +14,7 @@ rand = "0.8.4"
 rand_core = "0.6.3"
 ed25519-dalek = "1.0.1"
 x25519-dalek = "1.2.0"
+opis = "4.1.0"
+sha2 = "0.10.6"
+sha3 = "0.10.5"
+astro-format = "1.0.0"

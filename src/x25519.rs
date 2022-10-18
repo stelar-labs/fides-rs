@@ -1,6 +1,5 @@
-use crate::hash;
 use rand::{RngCore, rngs::OsRng};
-use x25519_dalek::{StaticSecret, PublicKey, x25519};
+use x25519_dalek::{StaticSecret, PublicKey, SharedSecret};
 
 pub fn private_key() -> [u8; 32] {
 
@@ -26,8 +25,12 @@ pub fn public_key(priv_key: &[u8; 32]) -> [u8; 32] {
 
 pub fn shared_key(priv_key: &[u8; 32], pub_key: &[u8; 32]) -> [u8; 32] {
 
-    let shared_point: [u8; 32] = x25519(*priv_key, *pub_key);
+    let private_key: StaticSecret = StaticSecret::from(*priv_key);
 
-    hash(&shared_point[..])
+    let public_key: PublicKey = PublicKey::from(*pub_key);
+
+    let shared_secret: SharedSecret = StaticSecret::diffie_hellman(&private_key, &public_key);
+    
+    shared_secret.to_bytes()
 
 }

@@ -1,54 +1,41 @@
-pub mod chacha20poly1305;
+use opis::Bit;
+mod bloom_filter;
+pub mod hash;
+pub mod merkle_tree;
 pub mod ed25519;
 pub mod x25519;
-use blake3;
 
-pub fn hash(input: &[u8]) -> [u8;32] {
-    * blake3::hash(input).as_bytes()
+#[derive(Debug)]
+pub struct BloomFilter { bits: Vec<Bit> }
+
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+use chacha20poly1305::aead::{Aead, NewAead};
+use rand::{RngCore, rngs::OsRng};
+use std::error::Error;
+
+pub fn encrypt(key: &[u8;32], message: &[u8]) -> Result<(Vec<u8>, Vec<u8>), Box::<dyn Error>> {
+    
+    let key = Key::from_slice(key);
+    let cipher = ChaCha20Poly1305::new(key);
+    let mut nonce = vec![0_u8; 12];
+    OsRng.fill_bytes(&mut nonce);
+
+    match cipher.encrypt(Nonce::from_slice(&nonce), message) {
+        Ok(encrypted) => Ok((nonce, encrypted)),
+        Err(_) => Err("Encryption failure!")?
+    }
+
 }
 
-pub fn merkle_root(mut hashes: Vec<[u8; 32]>) -> [u8; 32] {
+pub fn decrypt(key: &[u8;32], nonce: &[u8;12], encrypted: &[u8]) -> Result<Vec<u8>, Box::<dyn Error>> {
 
-	let mut result = [0_u8; 32];
+    let key = Key::from_slice(key);
+    let cipher = ChaCha20Poly1305::new(key);
+    let nonce = Nonce::from_slice(nonce);
 
-	if !hashes.is_empty() {
-
-		if hashes.len() % 2 != 0 {
-            
-            hashes.push([0_u8; 32])
-        
-        };
-
-		while hashes.len() > 1 {
-
-			let mut cache: Vec<[u8; 32]> = Vec::new();
-
-			let mut inter: Vec<[u8; 32]> = Vec::new();
-
-			for h in hashes {
-				
-				inter.push(h);
-				
-				if inter.len() == 2 {
-
-					let joined_hashes = [inter[0], inter[1]].concat();
-						
-                    cache.push(hash(&joined_hashes[..]));
-
-                    inter.clear()
-
-				}
-
-			}
-
-			hashes = cache
-
-		};
-
-		result = hashes[0]
-
-	}
-
-	result
+    match cipher.decrypt(nonce, encrypted.as_ref()) {
+        Ok(decrypted) => Ok(decrypted),
+        Err(_) => Err("Decryption failure!")?
+    }
 
 }
