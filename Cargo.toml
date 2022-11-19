@@ -1,9 +1,9 @@
 [package]
 name = "fides"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2021"
 license = "MIT"
-description = "Fides is a library for cryptographic primitives."
+description = "Fides is a library for cryptography algorithms."
 repository = "https://github.com/stelar-labs/fides-rs"
 readme = "README.md"
 

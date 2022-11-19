@@ -5,7 +5,7 @@ pub mod merkle_tree;
 pub mod ed25519;
 pub mod x25519;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct BloomFilter { bits: Vec<Bit> }
 
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
