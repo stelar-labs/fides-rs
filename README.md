@@ -1,6 +1,6 @@
 # Fides
 
-Fides is a library for cryptography algorithms.
+Fides is a library for cryptographic protocols.
 
 ## Features
 
@@ -8,7 +8,8 @@ Fides is a library for cryptography algorithms.
 - Digital Signatures: ed25519, Dilithium3 
 - Encryption: chacha20poly1305
 - Accumulation: Merkle Tree, Bloom Filter
+- Commitment Schemes
 - Hashing: Blake3, SHA2, SHA3
 - Proof System: PLONK
 
-2022-11-19
+2022-11-29

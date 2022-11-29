@@ -1,4 +1,4 @@
-use opis::{Bit, Int};
+use opis::{Bit, Integer};
 use crate::{hash::{blake_3, sha_2, sha_3}, BloomFilter};
 
  impl BloomFilter {
@@ -103,20 +103,20 @@ use crate::{hash::{blake_3, sha_2, sha_3}, BloomFilter};
 
  impl From<&[u8]> for BloomFilter {
     fn from(bytes: &[u8]) -> Self {
-        BloomFilter { bits: Int::from(bytes).bits() }
+        BloomFilter { bits: Integer::from(bytes).bits() }
     }
 
 }
 
 impl Into<Vec<u8>> for BloomFilter {
     fn into(self) -> Vec<u8> {
-        Int::from(&self.bits[..]).into()
+        Integer::from(&self.bits[..]).into()
     }
 }
 
 impl Into<Vec<u8>> for &BloomFilter {
     fn into(self) -> Vec<u8> {
-        Int::from(&self.bits[..]).into()
+        Integer::from(&self.bits[..]).into()
     }
 }
 
@@ -146,3 +146,25 @@ fn hash_int_from_bytes(bytes: &[u8]) -> u64 {
 
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::BloomFilter;
+
+    #[test]
+    fn search() {
+        
+        let objs = vec![
+            vec![1], vec![2], vec![3]
+        ];
+
+        let mut bloom = BloomFilter::new(3);
+
+        for obj in objs {
+
+            bloom.insert(&obj);
+
+        }
+
+        assert_eq!(bloom.search(&vec![1]), true);
+    }
+}
