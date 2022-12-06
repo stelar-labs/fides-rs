@@ -1,15 +1,18 @@
 # Fides
 
-Fides is a library for cryptographic protocols.
+Fides is a library for cryptographic primitives.
 
 ## Features
 
-- Public Key Exchange: x25519, Kyber-768
-- Digital Signatures: ed25519, Dilithium3 
-- Encryption: chacha20poly1305
-- Accumulation: Merkle Tree, Bloom Filter
+- Random Number Generator
+- Hashing
+- Encryption
+- Public Key Exchange
+- Digital Signatures
+- Accumulation
 - Commitment Schemes
-- Hashing: Blake3, SHA2, SHA3
-- Proof System: PLONK
+- Zero-knowledge Proof Schemes
+- Verifiable Delay Function
+- Fully Homomorphic Encryption
 
-2022-11-29
+2022-12-07

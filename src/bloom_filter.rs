@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use opis::{Bit, Integer};
 use crate::{hash::{blake_3, sha_2, sha_3}, BloomFilter};
 
@@ -101,23 +103,52 @@ use crate::{hash::{blake_3, sha_2, sha_3}, BloomFilter};
     }
  }
 
- impl From<&[u8]> for BloomFilter {
-    fn from(bytes: &[u8]) -> Self {
-        BloomFilter { bits: Integer::from(bytes).bits() }
+ impl TryFrom<&[u8]> for BloomFilter {
+
+    fn try_from(arg: &[u8]) -> Result<Self, Box<dyn Error>> {
+
+        let decoded = astro_format::decode(arg)?;
+
+        if decoded.len() == 2 {
+
+            let bits = Integer::from(decoded[1]);
+
+            let bit_count_int = Integer::from(decoded[0]);
+
+            let bit_count: usize = (&bit_count_int).into();
+
+            Ok(BloomFilter { bits: bits.to_ext_bits(bit_count) })
+
+        } else {
+
+            Err("Internal Error!")?
+
+        }
+
     }
 
-}
+    type Error = Box<dyn Error>;
 
-impl Into<Vec<u8>> for BloomFilter {
-    fn into(self) -> Vec<u8> {
-        Integer::from(&self.bits[..]).into()
-    }
 }
 
 impl Into<Vec<u8>> for &BloomFilter {
+
     fn into(self) -> Vec<u8> {
-        Integer::from(&self.bits[..]).into()
+
+        let bit_count = self.bits.len();
+
+        let bit_count_int = Integer::from(&bit_count);
+
+        let bit_count_bytes: Vec<u8> = bit_count_int.into();
+        
+        let bit_bytes: Vec<u8> = Integer::from(&self.bits[..]).into();
+
+        let res = astro_format::encode(&[&bit_count_bytes, &bit_bytes]);
+
+        res
+
     }
+
 }
 
 fn hash_int_from_bytes(bytes: &[u8]) -> u64 {
