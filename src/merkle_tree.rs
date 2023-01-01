@@ -1,68 +1,62 @@
 
-pub fn root<L,H>(leaves: &[&L]) -> H
+pub fn root<O: Clone, H:Fn(&[u8]) -> O>(hasher: H, leaves: &[&[u8]]) -> O where Vec<u8>: From<O> {
 
-    where
+    if leaves.is_empty() {
+
+        hasher(&[])
+
+    } else {
+
+        let mut level: Vec<O> = leaves
+            .iter()
+            .map(|&x| hasher(x))
+            .collect();
+            
+        while level.len() > 1 {
+
+            level = climb(&hasher, level);
+
+        }
+        
+        level[0].clone()
+
+    }
+
+}
+
+fn climb<O: Clone, H:Fn(&[u8]) -> O>(hasher: H, level: Vec<O>) -> Vec<O> where Vec<u8>: From<O> {
+
+    let t = level.len() / 2;
+
+    let mut res: Vec<O> = (0..t)
+        .into_iter()
+        .map(|x| {
+
+            let i = x * 2;
+
+            let a_bytes: Vec<u8> = level[i].clone().into();
+
+            let b_bytes: Vec<u8> = level[i + 1].clone().into();
+
+            let concatenated = [a_bytes, b_bytes].concat();
+
+            hasher(&concatenated)
+
+        })
+        .collect();
+
+    let r = level.len() % 2;
+
+        if r != 0 {
     
-        L: Into<H> + Clone,
-
-        H: Into<Vec<u8>> + From<Vec<u8>> + From<L> + Clone
-
-            {
-
-                if leaves.is_empty() {
-
-                    vec![].into()
-
-                } else {
-
-                    let mut hashes: Vec<H> = leaves
-                        .iter()
-                        .map(|&x| x.clone().into())
-                        .collect();
-                    
-                    while hashes.len() > 1 {
-
-                        let mut next = vec![];
-
-                        let mut intermediate = vec![];
-
-                        for h in hashes {
-                            
-                            intermediate.push(h);
-                            
-                            if intermediate.len() == 2 {
-
-                                let join = intermediate
-                                    .iter()
-                                    .fold(
-                                        vec![], |acc, x| {
-
-                                            let x_bytes: Vec<u8> = x.clone().into();
-                                            
-                                            [acc, x_bytes].concat()
-                                        }
-                                    );
-
-                                let join_hash: H = join.into();
-                                    
-                                next.push(join_hash);
-
-                                intermediate.clear()
-
-                            }
-
-                        }
-
-                        if !intermediate.is_empty() {
-                            next.push(intermediate[0].clone());
-                        }
-
-                        hashes = next
-                        
-                    }
-
-                    hashes[0].clone()
-
-                }
+            let i = level.len() - 1;
+    
+            let l_bytes: Vec<u8> = level[i].clone().into();
+    
+            res.push(hasher(&l_bytes))
+            
+        }
+    
+    res
 
 }

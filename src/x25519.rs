@@ -1,35 +1,35 @@
 use rand::{RngCore, rngs::OsRng};
 use x25519_dalek::{StaticSecret, PublicKey, SharedSecret};
 
-pub fn private_key() -> [u8; 32] {
+pub fn secret_key() -> [u8; 32] {
 
     let mut key = [0_u8; 32];
 
     OsRng.fill_bytes(&mut key);
 
-    let private_key: StaticSecret = StaticSecret::from(key);
+    let sk: StaticSecret = StaticSecret::from(key);
 
-    private_key.to_bytes()
-
-}
-
-pub fn public_key(priv_key: &[u8; 32]) -> [u8; 32] {
-
-    let private_key: StaticSecret = StaticSecret::from(*priv_key);
-
-    let public_key: PublicKey = PublicKey::from(&private_key);
-
-    public_key.to_bytes()
+    sk.to_bytes()
 
 }
 
-pub fn shared_key(priv_key: &[u8; 32], pub_key: &[u8; 32]) -> [u8; 32] {
+pub fn public_key(secret_key: &[u8; 32]) -> [u8; 32] {
 
-    let private_key: StaticSecret = StaticSecret::from(*priv_key);
+    let sk: StaticSecret = StaticSecret::from(*secret_key);
 
-    let public_key: PublicKey = PublicKey::from(*pub_key);
+    let pk: PublicKey = PublicKey::from(&sk);
 
-    let shared_secret: SharedSecret = StaticSecret::diffie_hellman(&private_key, &public_key);
+    pk.to_bytes()
+
+}
+
+pub fn shared_key(public_key: &[u8; 32], secret_key: &[u8; 32]) -> [u8; 32] {
+
+    let sk: StaticSecret = StaticSecret::from(*secret_key);
+
+    let pk: PublicKey = PublicKey::from(*public_key);
+
+    let shared_secret: SharedSecret = StaticSecret::diffie_hellman(&sk, &pk);
     
     shared_secret.to_bytes()
 
