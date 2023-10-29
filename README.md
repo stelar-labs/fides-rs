@@ -4,32 +4,24 @@ Fides is a library for cryptographic primitives.
 
 ## Author
 
-Roy R. O. Okello
+- Roy R. O. Okello: [Email](mailto:royokello@protonmail.com) & [GitHub](https://github.com/royokello)
 
-[Email](mailto:royokello@protonmail.com)
+## Features
 
-[Github](https://github.com/royokello)
-
-[Twitter](https://twitter.com/RealOkello)
+- Digital Signature Algorithms
+- Hashing
+- Public Key Exchange
+- Data Structures
 
 ## Usage
 
-### Cargo.toml
+### Installation
 
-```text
-[dependencies]
-fides = "3.1.0"
-```
+- From Crates by adding `fides = "3.2.0"` to `Cargo.toml` under `[dependencies]`
 
-### Module.rs
+### Digital Signature Algorithms
 
-```text
-use fides::{ ed25519, x25519, merkle_tree, hash::{ sha_2, sha_3 } };
-```
-
-## API
-
-### ed25519
+#### ed25519
 
 `secret_key -> secret_key`
 
@@ -39,7 +31,9 @@ use fides::{ ed25519, x25519, merkle_tree, hash::{ sha_2, sha_3 } };
 
 `verify: message, public_key, signature -> bool`
 
-### x25519
+### Public Key Exchange
+
+#### x25519
 
 `secret_key -> secret_key`
 
@@ -47,47 +41,46 @@ use fides::{ ed25519, x25519, merkle_tree, hash::{ sha_2, sha_3 } };
 
 `shared_key: public_key, secret_key -> shared_secret`
 
-### merkle tree
+### Data Structures
+
+#### Bloom Filter
+
+#### merkle tree
 
 `root: hasher, leaves -> hash`
 
-### hash
-
-`blake_3: input -> hash`
-
-`sha_2::sha_224: input -> hash`
-
-`sha_2::sha_256: input -> hash`
-
-`sha_2::sha_512_224: input -> hash`
-
-`sha_2::sha_512_256: input -> hash`
-
-`sha_2::sha_384: input -> hash`
-
-`sha_2::sha_512: input -> hash`
-
-`sha_3::sha_224: input -> hash`
-
-`sha_3::sha_256: input -> hash`
-
-`sha_3::sha_384: input -> hash`
-
-`sha_3::sha_512: input -> hash`
-
 ## Future
 
-- Random Number Generator
-- Hashing
-- Encryption
-- Public Key Exchange
-- Digital Signatures
-- Accumulation
-- Commitment Schemes
-- Zero-knowledge Proof Schemes
-- Verifiable Delay Function
-- Fully Homomorphic Encryption
+- 🎲 Random Number Generator
+- 🔒 Encryption
+- 🏗 Accumulation
+- 📜 Commitment Schemes
+- 😎 Zero-knowledge Proof Schemes
+- ⏲ Verifiable Delay Function
+- 🔢 Fully Homomorphic Encryption
 
 ## License
 
-MIT
+MIT License
+
+Copyright Stelar Labs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+## Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
