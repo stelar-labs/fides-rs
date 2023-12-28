@@ -45,10 +45,6 @@ Fides is a library for cryptographic primitives.
 
 #### Bloom Filter
 
-#### merkle tree
-
-`root: hasher, leaves -> hash`
-
 ## Future
 
 - 🎲 Random Number Generator
