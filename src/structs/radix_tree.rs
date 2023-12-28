@@ -1,20 +1,54 @@
 use std::{collections::{HashMap, BTreeMap}, error::Error};
 
+use astro_format::IntoBytes;
+
+use crate::hash::blake_3;
+
 pub struct RadixTree<K,V> {
-    root: [u8; 32], nodes: HashMap<[u8; 32], RadixNode<K,V>>, parents: HashMap<[u8;32], [u8;32]>,
+    nodes: HashMap<[u8; 32], RadixNode<K,V>>,
+    parents: HashMap<[u8;32], [u8;32]>,
+    root: [u8; 32],
 }
 
 #[derive(Clone)]
 pub struct RadixNode<K,V> {
-    key: Vec<K>, children: BTreeMap<K,[u8; 32]>, value: Option<V>,
+    children: BTreeMap<K,[u8; 32]>,
+    key: Vec<K>,
+    value: Option<V>,
 }
 
 impl<K, V> RadixNode<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    V: IntoBytes,
 {
     fn hash(&self) -> [u8; 32] {
-        [0; 32]
+
+        let children_hash = match self.children.iter().next() {
+            Some((_, &first_child_hash)) => {
+                self.children.iter().skip(1).fold(first_child_hash, |acc, (_, &child_hash)| {
+                    let combined = [acc, child_hash].concat();
+                    blake_3(&combined)
+                })
+            },
+            None => blake_3(&vec![]),
+        };
+        
+        let key_bytes = self.key.iter().flat_map(|k| k.clone().into_bytes()).collect::<Vec<u8>>();
+        let key_hash = blake_3(&key_bytes);
+
+        let children_key_concat = [children_hash, key_hash].concat();
+        let children_key_hash = blake_3(&children_key_concat);
+
+        let value_bytes = match &self.value {
+            Some(v) => v.into_bytes(),
+            None => Vec::new(),
+        };
+        let value_hash = blake_3(&value_bytes);
+
+        let children_key_value_concat = [children_key_hash, value_hash].concat();
+        blake_3(&children_key_value_concat)
+
     }
 
     fn new() -> Self {
@@ -26,8 +60,8 @@ where
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord,
-    V: Clone,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    V: Clone + IntoBytes,
 {
     // Constructor
     pub fn new() -> Self {
