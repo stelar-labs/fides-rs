@@ -1,5 +1,4 @@
 use opis::Bit;
-mod merkle_tree;
 mod bloom_filter;
 mod radix_tree;
 
