@@ -4,20 +4,21 @@ use astro_format::IntoBytes;
 
 use crate::hash::blake_3;
 
+#[derive(Debug,Clone)]
 pub struct RadixTree<K,V> {
     nodes: HashMap<[u8; 32], RadixNode<K,V>>,
     parents: HashMap<[u8;32], [u8;32]>,
     root: [u8; 32],
 }
 
-#[derive(Clone)]
+#[derive(Debug,Clone)]
 pub struct RadixNode<K,V> {
-    children: BTreeMap<K,[u8; 32]>,
+    children: BTreeMap<K,[u8;32]>,
     key: Vec<K>,
     value: Option<V>,
 }
 
-impl<K, V> RadixNode<K, V>
+impl<K,V> RadixNode<K,V>
 where
     K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
     V: IntoBytes,
@@ -53,77 +54,104 @@ where
 
     fn new() -> Self {
         RadixNode {
-            key: vec![], children: BTreeMap::new(), value: None,
+            children: BTreeMap::new(),
+            key: vec![],
+            value: None,
         }
     }
+
 }
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes + std::fmt::Display + std::fmt::Debug,
     V: Clone + IntoBytes,
 {
     // Constructor
     pub fn new() -> Self {
         RadixTree {
-            root: [0; 32], nodes: HashMap::new(), parents: HashMap::new()
+            nodes: HashMap::new(),
+            parents: HashMap::new(),
+            root: [0;32], 
         }
     }
 
     // Insert method
-    pub fn insert(&mut self, key: Vec<K>, value: V) {
+    pub fn insert<I>(&mut self, key: I, value: V)
+    where I: IntoIterator<Item = K>, {
 
-        let mut i = 0;
-        let last_i = key.len() - 1;
-        
         let mut current_node_hash = self.root;
 
-        while i < key.len() {
+        if self.root == [0;32] {
 
-            let current_node_key_opt = match self.nodes.get(&current_node_hash) {
-                Some(current_node) => Some(current_node.key.clone()),
-                None => None,
+            let key_vec: Vec<K> = key.into_iter().collect();
+
+            let new_node = RadixNode {
+                children: BTreeMap::new(),
+                key: key_vec,
+                value: Some(value.clone()),
             };
 
-            if let Some(current_node_key) = current_node_key_opt {
+            let new_node_hash = new_node.hash();
+            
+            self.nodes.insert(new_node_hash, new_node);
 
-                if i == last_i {
+            self.root = new_node_hash
 
-                    if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
-                        current_node.value = Some(value);
-                    }
+        } else {
 
-                    self.rehash(&current_node_hash);
-                    
-                    return;
+            let mut key_parts = key.into_iter().peekable();
 
-                } else {
+            while let Some(current_key_part) = key_parts.next() {
 
-                    if current_node_key == &key[i..] {
+                let is_last_k = key_parts.peek().is_none();
+
+                let current_node_key_opt = match self.nodes.get(&current_node_hash) {
+                    Some(current_node) => Some(current_node.key.clone()),
+                    None => None,
+                };
+
+                if let Some(current_node_key) = current_node_key_opt {
+
+                    if is_last_k {
 
                         if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
                             current_node.value = Some(value);
                         }
 
                         self.rehash(&current_node_hash);
-                            
+                        
                         return;
-                    
+
                     } else {
+
                         let mut split_position = 0;
-
-                        for (j, ck) in current_node_key.iter().enumerate() {
-
-                            if key[i] == *ck {
-                                i += 1
+                        let mut matched = true;
+                        
+                        for ck in current_node_key.iter() {
+                            if let Some(next_key_part) = key_parts.next() {
+                                if next_key_part != *ck {
+                                    matched = false;
+                                    break;
+                                }
+                                split_position += 1;
                             } else {
-                                split_position = j;
+                                matched = false;
                                 break;
                             }
-                        
                         }
-                        
-                        if split_position != 0 {
+
+                        if matched {
+
+                            if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
+                                current_node.value = Some(value);
+                            }
+
+                            self.rehash(&current_node_hash);
+                                
+                            return;
+
+                        } else if split_position != 0 {
 
                             match self.split_node(current_node_hash, split_position) {
                                 Ok((left_node_hash, _right_node_hash)) => {
@@ -134,29 +162,31 @@ where
                                     return;
                                 }
                             }
-                            
+
                         } else {
 
-                            let new_node_key = if i == last_i {
-                                vec![]
-                            } else {
-                                key[i + 1..].to_vec()
+                            let mut new_node_key = vec![];
+                            
+                            if !is_last_k {
+                                while let Some(key_part) = key_parts.next() {
+                                    new_node_key.push(key_part);
+                                }
                             };
-    
+
                             let new_node = RadixNode {
-                                key: new_node_key,
                                 children: BTreeMap::new(),
+                                key: new_node_key,
                                 value: Some(value.clone()),
                             };
-    
+
                             let new_node_hash = new_node.hash();
                             
                             self.nodes.insert(new_node_hash, new_node);
 
                             if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
-                                current_node.children.insert(key[i].clone(), new_node_hash);
+                                current_node.children.insert(current_key_part, new_node_hash);
                             }
-    
+
                             self.parents.insert(new_node_hash, current_node_hash);
 
                             self.rehash(&current_node_hash);
@@ -170,25 +200,26 @@ where
             }
         
         }
-    
+
     }
 
     
     // Remove method
-    pub fn remove(&mut self, key: Vec<K>) -> Result<(), Box<dyn Error>> {
+    pub fn remove<I>(&mut self, key: I) -> Result<(), Box<dyn Error>> where I: IntoIterator<Item = K>, {
         
         let mut current_node_hash = self.root;
         
-        let mut i = 0;
-        let last_i = key.len() - 1;
+        let mut key_parts = key.into_iter().peekable();
 
-        while i < key.len() {
+        while let Some(current_key_part) = key_parts.next() {
+            
+            let is_last_k = key_parts.peek().is_none();
 
             if let Some(current_node) = self.nodes.get(&current_node_hash) {
 
                 if current_node.key.is_empty() {
 
-                    if i == last_i {
+                    if is_last_k {
 
                         if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
                             current_node.value = None;
@@ -200,10 +231,9 @@ where
 
                     } else {
 
-                        match current_node.children.get(&key[i]) {
+                        match current_node.children.get(&current_key_part) {
                             Some(next_node_hash) => {
                                 current_node_hash = *next_node_hash;
-                                i += 1;
                             },
                             None => return Ok(()),
                         }
@@ -212,25 +242,33 @@ where
 
                 } else {
 
-                    if &key[i..i + current_node.key.len()] == current_node.key.as_slice() {
-                        
-                        if i + current_node.key.len() == key.len() {
-                            if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
-                                current_node.value = None;
-                            }
+                    let mut key_matched = true;
+                    let mut key_iter = current_node.key.iter();
 
-                            self.rehash(&current_node_hash);
+                    while let Some(ck) = key_iter.next() {
+                        if Some(ck) != key_parts.next().as_ref() {
+                            key_matched = false;
+                            break;
+                        }
+                    }
 
-                            return Ok(());
-                        
+                    if key_matched && key_iter.next().is_none() && is_last_k {
+                        if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
+                            current_node.value = None;
+                        }
+                        self.rehash(&current_node_hash);
+                        return Ok(());
+                    
+                    } else if key_matched {
+
+                        if let Some(next_node_hash) = current_node.children.get(&current_key_part) {
+                            current_node_hash = *next_node_hash;
                         } else {
-                            i += current_node.key.len();
-                            current_node_hash = *current_node.children.get(&key[i]).ok_or("Child node not found!")?;
+                            return Err("Key does not match!".into());
                         }
                     
                     } else {
                         return Err("Key does not match!".into());
-                    
                     }
 
                 }
@@ -244,48 +282,49 @@ where
         Ok(())
     }
 
-    // Search method
-    pub fn search(&self, key: &[K]) -> Option<&V> {
-
+    pub fn search<I>(&self, key: I) -> Option<&V>
+    where
+        I: IntoIterator<Item = K>,
+    {
         let mut current_node_hash = &self.root;
-        let mut i = 0;
+        let mut key_parts = key.into_iter().peekable();
 
-        while i < key.len() {
-            
+        while let Some(current_key_part) = key_parts.next() {
             if let Some(node) = self.nodes.get(current_node_hash) {
-
                 if node.key.is_empty() {
-
-                    if let Some(next_node_hash) = node.children.get(&key[i]) {
+                    if let Some(next_node_hash) = node.children.get(&current_key_part) {
                         current_node_hash = next_node_hash;
-                        i += 1;
                         continue;
                     } else {
                         return None;
                     }
-
                 } else {
-                    // Compressed key case
-                    for (j, key_part) in node.key.iter().enumerate() {
-                        if i + j >= key.len() || key_part != &key[i + j] {
-                            // Mismatch or search_key is shorter than node_key
-                            return None;
+
+                    let mut key_matched = true;
+
+                    let mut key_iter = node.key.iter();
+
+                    if Some(&current_key_part) != key_iter.next() {
+                        return None;
+                    }
+
+                    while let Some(ck) = key_iter.next() {
+                        if Some(ck) != key_parts.next().as_ref() {
+                            key_matched = false;
+                            break;
                         }
                     }
 
-                    // Update search index after matching with compressed key
-                    i += node.key.len();
-
-                    // If it's a complete match of the search key
-                    if i == key.len() {
+                    if key_matched && key_iter.next().is_none() && key_parts.peek().is_none() {
+                        // The entire key matches and there are no more parts
                         return node.value.as_ref();
-                    }
-
-                    // Continue with children if there's more to search
-                    if let Some(next_node_hash) = node.children.get(&key[i]) {
-                        current_node_hash = next_node_hash;
-                        i += 1; // Move to the next part of the search key
-                        continue;
+                    } else if key_matched {
+                        // The key matches so far, continue with the next node
+                        if let Some(next_node_hash) = node.children.get(&key_parts.peek().unwrap_or(&&current_key_part)) {
+                            current_node_hash = next_node_hash;
+                        } else {
+                            return None;
+                        }
                     } else {
                         return None;
                     }
@@ -388,4 +427,23 @@ where
 
     }
     
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_insert_and_search() {
+        let mut tree = RadixTree::new();
+        println!("tree.new -> {:?}", tree);
+        let key = vec![0_u8, 1];
+        let value = "value";
+
+        tree.insert(key.clone(), value);
+        println!("tree.insert -> {:?}", tree);
+
+        assert_eq!(tree.search(key), Some(&value));
+    }
+
 }
