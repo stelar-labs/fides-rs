@@ -5,8 +5,8 @@ use super::RadixTree;
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes + std::fmt::Display + std::fmt::Debug,
-    V: Clone + IntoBytes + std::fmt::Debug,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    V: Clone + IntoBytes,
 {
 
     pub fn search<I>(&self, key: I) -> Option<&V>

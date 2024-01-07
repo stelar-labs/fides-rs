@@ -7,8 +7,8 @@ use super::{RadixTree, RadixNode};
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes + std::fmt::Display + std::fmt::Debug,
-    V: Clone + IntoBytes + std::fmt::Debug,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    V: Clone + IntoBytes,
 {
 
     pub fn insert<I>(&mut self, key: I, value: V)
@@ -34,11 +34,9 @@ where
 
             } else {
 
-                let mut key_parts = key.into_iter().peekable();
+                let mut key_iter = key.into_iter().peekable();
 
-                while let Some(current_key_part) = key_parts.next() {
-
-                    let is_last_k = key_parts.peek().is_none();
+                while let Some(k) = key_iter.next() {
 
                     let current_node_key_opt = match self.nodes.get(&current_node_hash) {
                         Some(current_node) => Some(current_node.key.clone()),
@@ -47,7 +45,7 @@ where
 
                     if let Some(current_node_key) = current_node_key_opt {
 
-                        if is_last_k {
+                        if key_iter.peek().is_none() {
 
                             if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
                                 current_node.value = Some(value);
@@ -63,7 +61,7 @@ where
 
                             let mut current_node_key_iter = current_node_key.iter();
 
-                            if Some(&current_key_part) != current_node_key_iter.next() {
+                            if Some(&k) != current_node_key_iter.next() {
                                 matched = false;
                             } else {
                                 split_position += 1;
@@ -71,11 +69,11 @@ where
 
                             while let Some(ck) = current_node_key_iter.next() {
 
-                                if let Some(next_key_part) = key_parts.peek() {
+                                if let Some(next_key_part) = key_iter.peek() {
 
                                     if next_key_part == ck {
 
-                                        key_parts.next();
+                                        key_iter.next();
 
                                     } else {
                                         matched = false;
@@ -108,12 +106,12 @@ where
 
                                         current_node_hash = left_node_hash;
 
-                                        let child_key = key_parts.next().unwrap();
+                                        let child_key = key_iter.next().unwrap();
 
                                         let mut new_node_key = vec![];
                                 
-                                        if !is_last_k {
-                                            while let Some(key_part) = key_parts.next() {
+                                        if key_iter.peek().is_some() {
+                                            while let Some(key_part) = key_iter.next() {
                                                 new_node_key.push(key_part);
                                             }
                                         };
@@ -147,8 +145,8 @@ where
 
                                 let mut new_node_key = vec![];
                                 
-                                if !is_last_k {
-                                    while let Some(key_part) = key_parts.next() {
+                                if key_iter.peek().is_some() {
+                                    while let Some(key_part) = key_iter.next() {
                                         new_node_key.push(key_part);
                                     }
                                 };
@@ -164,7 +162,7 @@ where
                                 self.nodes.insert(new_node_hash, new_node);
 
                                 if let Some(current_node) = self.nodes.get_mut(&current_node_hash) {
-                                    current_node.children.insert(current_key_part, new_node_hash);
+                                    current_node.children.insert(k, new_node_hash);
                                 }
 
                                 self.parents.insert(new_node_hash, current_node_hash);

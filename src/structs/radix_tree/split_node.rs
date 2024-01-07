@@ -5,8 +5,8 @@ use super::{RadixTree, RadixNode};
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes + std::fmt::Display + std::fmt::Debug,
-    V: Clone + IntoBytes + std::fmt::Debug,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    V: Clone + IntoBytes,
 {
     pub fn split_node(&mut self, node_hash: [u8; 32], split_position: usize) -> Result<([u8; 32], [u8; 32]), Box<dyn Error>> {
 

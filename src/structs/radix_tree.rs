@@ -33,8 +33,9 @@ where
 
         let children_hash = match self.children.iter().next() {
             Some((_, &first_child_hash)) => {
-                self.children.iter().skip(1).fold(first_child_hash, |acc, (_, &child_hash)| {
-                    let combined = [acc, child_hash].concat();
+                self.children.iter().skip(1).fold(first_child_hash, |acc, (child_key, &child_hash)| {
+                    let child_key_hash = blake_3(&child_key.into_bytes());
+                    let combined = [acc, blake_3(&[child_key_hash, child_hash].concat())].concat();
                     blake_3(&combined)
                 })
             },
@@ -128,22 +129,34 @@ mod tests {
 
     #[test]
     fn test_node_splitting_with_chars() {
-        let mut tree = RadixTree::new();
-
-        tree.insert("abcde".chars(), 1);
         
-        tree.insert("abcfg".chars(), 2);
+        let mut tree1 = RadixTree::new();
 
+        tree1.insert("abcde".chars(), 1);
+        
+        tree1.insert("abcfg".chars(), 2);
+        
         // Verify that both keys are present and return correct values
-        assert_eq!(tree.search("abcde".chars()), Some(&1));
-        assert_eq!(tree.search("abcfg".chars()), Some(&2));
+        assert_eq!(tree1.search("abcde".chars()), Some(&1));
+        assert_eq!(tree1.search("abcfg".chars()), Some(&2));
 
         // Optionally, verify the absence of a key that should not exist
-        assert_eq!(tree.search("abcf".chars()), None);
+        assert_eq!(tree1.search("abcf".chars()), None);
 
         // Additional checks can be made based on the internal structure of your RadixTree
-        assert!(tree.remove("abcde".chars()).is_ok());
-        assert_eq!(tree.search("abcde".chars()), None);
+        assert!(tree1.remove("abcde".chars()).is_ok());
+
+        assert_eq!(tree1.search("abcde".chars()), None);
+        
+        assert_eq!(tree1.search("abcfg".chars()), Some(&2));
+
+        let mut tree2 = RadixTree::new();
+
+        tree2.insert("abcfg".chars(), 2);
+
+        assert_eq!(tree1.root, tree2.root);
+    
     }
+
 }
 
