@@ -11,17 +11,11 @@ Fides is a library for cryptographic primitives.
 - Digital Signature Algorithms
 - Hashing
 - Public Key Exchange
-- Data Structures
+- Data Structures like Bloom Filters & Radix Tree
 
-## Usage
+## Digital Signature Algorithms
 
-### Installation
-
-- From Crates by adding `fides = "3.2.0"` to `Cargo.toml` under `[dependencies]`
-
-### Digital Signature Algorithms
-
-#### ed25519
+### ed25519
 
 `secret_key -> secret_key`
 
@@ -31,9 +25,9 @@ Fides is a library for cryptographic primitives.
 
 `verify: message, public_key, signature -> bool`
 
-### Public Key Exchange
+## Public Key Exchange
 
-#### x25519
+### x25519
 
 `secret_key -> secret_key`
 
@@ -41,9 +35,44 @@ Fides is a library for cryptographic primitives.
 
 `shared_key: public_key, secret_key -> shared_secret`
 
-### Data Structures
+## Data Structures
 
-#### Bloom Filter
+### Bloom Filter
+
+### Radix Tree
+
+**Structs**
+
+`RadixTree<K, V>`: Represents the radix tree, generic over `K` for key and `V` for value.
+- `nodes`: `HashMap` storing the nodes of the tree, each identified by a 32-byte array.
+- `parents`: `HashMap` tracking the parent of each node.
+- `root`: 32-byte array representing the root node.
+
+`RadixNode<K, V>`: Represents a single node within the `RadixTree`.
+- `children`: `BTreeMap` mapping keys to child node hashes.
+- `key`: `Vec<K>` representing the node's key.
+- `value`: Optional `V` holding the value associated with the key.
+
+**Methods**
+
+`new() -> Self`: Creates a new instance of `RadixTree`.
+
+`insert<I>(&mut self, key: I, value: V)`: Inserts a key-value pair into the tree.
+- `key`: Iterable of type `K`.
+- `value`: Value to be associated with the key.
+
+`rehash(&mut self, child_hash: &[u8; 32])`: Updates the hash of a child node.
+- `child_hash`: Hash of the child node.
+
+`remove<I>(&mut self, key: I) -> Result<(), Box<dyn Error>>`: Removes a key-value pair.
+- `key`: Iterable of type `K`.
+
+`search<I>(&self, key: I) -> Option<&V>`: Searches for a value by key.
+- `key`: Iterable of type `K`.
+
+`split_node(&mut self, node_hash: [u8; 32], split_position: usize) -> Result<([u8; 32], [u8; 32]), Box<dyn Error>>`: Splits a node at a specified position.
+- `node_hash`: Hash of the node to split.
+- `split_position`: Position to split the node.
 
 ## Future
 
