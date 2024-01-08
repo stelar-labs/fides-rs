@@ -5,6 +5,7 @@ use astro_format::IntoBytes;
 use crate::hash::blake_3;
 
 mod insert;
+mod into_bytes;
 mod rehash;
 mod remove;
 mod search;
