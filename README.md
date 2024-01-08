@@ -58,21 +58,26 @@ Fides is a library for cryptographic primitives.
 `new() -> Self`: Creates a new instance of `RadixTree`.
 
 `insert<I>(&mut self, key: I, value: V)`: Inserts a key-value pair into the tree.
-- `key`: Iterable of type `K`.
-- `value`: Value to be associated with the key.
 
 `rehash(&mut self, child_hash: &[u8; 32])`: Updates the hash of a child node.
-- `child_hash`: Hash of the child node.
 
 `remove<I>(&mut self, key: I) -> Result<(), Box<dyn Error>>`: Removes a key-value pair.
-- `key`: Iterable of type `K`.
 
 `search<I>(&self, key: I) -> Option<&V>`: Searches for a value by key.
-- `key`: Iterable of type `K`.
 
 `split_node(&mut self, node_hash: [u8; 32], split_position: usize) -> Result<([u8; 32], [u8; 32]), Box<dyn Error>>`: Splits a node at a specified position.
-- `node_hash`: Hash of the node to split.
-- `split_position`: Position to split the node.
+
+**Traits**
+
+IntoBytes: Provides functionality to serialize RadixTree and RadixNode into bytes.
+
+- For RadixNode<K, V>:
+
+`into_bytes(&self) -> Vec<u8>`: Serializes the RadixNode into a byte vector. This includes serializing the children, key, and value fields.
+
+- For RadixTree<K, V>:
+
+`into_bytes(&self) -> Vec<u8>`: Serializes the entire RadixTree into a byte vector. This process involves serializing the root and each node in nodes (using RadixNode's into_bytes method).
 
 ## Future
 
