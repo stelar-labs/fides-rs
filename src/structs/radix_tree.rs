@@ -1,15 +1,14 @@
-use std::{collections::{HashMap, BTreeMap}, error::Error};
-
-use astro_format::IntoBytes;
-
-use crate::hash::blake_3;
-
 mod insert;
 mod into_bytes;
 mod rehash;
 mod remove;
 mod search;
 mod split_node;
+mod try_from_bytes;
+use astro_format::IntoBytes;
+use crate::hash::blake_3;
+use std::collections::{HashMap, BTreeMap};
+
 
 #[derive(Debug,Clone)]
 pub struct RadixTree<K,V> {
@@ -27,10 +26,10 @@ pub struct RadixNode<K,V> {
 
 impl<K,V> RadixNode<K,V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
+    K: Eq + Clone + Ord + IntoBytes,
     V: IntoBytes,
 {
-    fn hash(&self) -> [u8; 32] {
+    pub fn hash(&self) -> [u8; 32] {
 
         let children_hash = match self.children.iter().next() {
             Some((_, &first_child_hash)) => {
@@ -88,6 +87,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use astro_format::TryFromBytes;
     use super::*;
 
     #[test]
@@ -110,9 +110,7 @@ mod tests {
     #[test]
     fn test_remove() {
         let mut tree = RadixTree::new();
-        println!("tree -> {:?}", tree);
         tree.insert("key1".chars(), 1);
-        println!("tree -> {:?}", tree);
         assert!(tree.remove("key1".chars()).is_ok());
         assert_eq!(tree.search("key1".chars()), None);
         // Test removing a non-existent key
@@ -134,7 +132,6 @@ mod tests {
         let mut tree1 = RadixTree::new();
 
         tree1.insert("abcde".chars(), 1);
-        
         tree1.insert("abcfg".chars(), 2);
         
         // Verify that both keys are present and return correct values
@@ -157,6 +154,34 @@ mod tests {
 
         assert_eq!(tree1.root, tree2.root);
     
+    }
+
+    #[test]
+    fn test_into_bytes_and_back() {
+        let mut tree_1 = RadixTree::new();
+        tree_1.insert("key1".chars(), 1_u8);
+        tree_1.insert("key2".chars(), 2);
+
+        println!("tree1 -> {:?}", tree_1.root);
+
+        for node in &tree_1.nodes {
+            println!(" * {:?}", node.0);
+            println!(" * {:?}", node.1);
+        }
+
+        assert_eq!(tree_1.search("key1".chars()), Some(&1));
+        assert_eq!(tree_1.search("key2".chars()), Some(&2));
+
+        // Serialize the tree into bytes
+        let tree_bytes = tree_1.into_bytes();
+
+        // Deserialize from bytes back into a tree
+        let tree_2: RadixTree<char,u8> = RadixTree::try_from_bytes(&tree_bytes).expect("Deserialization failed");
+
+        // Verify that the deserialized tree has the same content
+        assert_eq!(tree_2.search("key1".chars()), Some(&1));
+        assert_eq!(tree_2.search("key2".chars()), Some(&2));
+
     }
 
 }

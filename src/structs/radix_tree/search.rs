@@ -5,73 +5,84 @@ use super::RadixTree;
 
 impl<K, V> RadixTree<K, V>
 where
-    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes,
-    V: Clone + IntoBytes,
+    K: Eq + std::hash::Hash + Clone + std::cmp::Ord + IntoBytes + std::fmt::Debug,
+    V: Clone + IntoBytes + std::fmt::Debug,
 {
 
     pub fn search<I>(&self, key: I) -> Option<&V>
         where
             I: IntoIterator<Item = K>,
         {
-            let mut current_node_hash = &self.root;
+
+            let mut current_node_hash_opt = Some(&self.root);
 
             let mut key_parts = key.into_iter().peekable();
 
-            while let Some(current_key_part) = key_parts.next() {
+            while let Some(current_node_hash) = current_node_hash_opt {
+                
+                let current_key_part_opt = key_parts.next();
 
                 if let Some(node) = self.nodes.get(current_node_hash) {
 
                     if node.key.is_empty() {
 
-                        if let Some(next_node_hash) = node.children.get(&current_key_part) {
-                            current_node_hash = next_node_hash;
-                            continue;
+                        if key_parts.peek().is_none() {
+
+                            return node.value.as_ref();
+
                         } else {
-                            return None;
+
+                            if let Some(current_key_part) = current_key_part_opt {
+
+                                if let Some(next_node_hash) = node.children.get(&current_key_part) {
+                                    current_node_hash_opt = Some(next_node_hash);
+                                    continue;
+                                } else {
+                                    return None;
+                                }
+                            
+                            } else {
+                                return None;
+                            }
+
                         }
 
                     } else {
 
-                        let mut key_matched = true;
+                        let mut node_key_iter = node.key.iter().peekable();
 
-                        let mut key_iter = node.key.iter();
-
-                        if Some(&current_key_part) != key_iter.next() {
+                        if current_key_part_opt.as_ref() != node_key_iter.next() {
                             return None;
                         }
 
-                        while let Some(ck) = key_iter.next() {
-                            if Some(ck) != key_parts.next().as_ref() {
-                                key_matched = false;
-                                break;
+                        while let Some(node_key_part) = node_key_iter.next() {
+
+                            if Some(node_key_part) != key_parts.peek() {
+                                
+                                return None
+                            } else {
+                                key_parts.next();
                             }
                         }
 
-                        if key_matched && key_iter.next().is_none() && key_parts.peek().is_none() {
+                        if let Some(next_key_part) = key_parts.peek() {
 
-                            return node.value.as_ref();
-                        
-                        } else if key_matched {
-
-                            if let Some(next_key_part) = key_parts.next() {
-
-                                if let Some(next_node_hash) = node.children.get(&next_key_part) {
-                                    current_node_hash = next_node_hash;
-                                } else {
-                                    return None;
-                                }
-
+                            if let Some(next_node_hash) = node.children.get(&next_key_part) {
+                                current_node_hash_opt = Some(next_node_hash);
+                                key_parts.next();
                             } else {
                                 return None;
                             }
 
                         } else {
-                            return None;
+                            return node.value.as_ref();
                         }
+
                     }
                 } else {
                     return None;
                 }
+
             }
 
             None
