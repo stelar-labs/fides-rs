@@ -83,6 +83,10 @@ where
         }
     }
 
+    pub fn hash(self) -> [u8; 32] {
+        self.root
+    }
+
 }
 
 #[cfg(test)]
