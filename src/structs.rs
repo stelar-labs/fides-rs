@@ -1,6 +1,7 @@
 use opis::Bit;
-mod bloom_filter;
-mod radix_tree;
+pub mod bloom_filter;
+pub mod merkle_tree;
+pub mod radix_tree;
 
 #[derive(Debug,Clone)]
 pub struct BloomFilter {
