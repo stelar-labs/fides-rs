@@ -11,6 +11,41 @@ pub struct MerkleTree<T> {
     parents: HashMap<[u8; 32], [u8; 32]>,
 }
 
+impl<T> IntoBytes for MerkleTree<T>
+where
+    T: IntoBytes
+{
+    fn into_bytes(&self) -> Vec<u8> {
+        // Create a result vector starting with the root
+        let mut result = Vec::new();
+        result.extend_from_slice(&self.root);
+
+        // Create nodes bytes
+        let nodes_iter = self.nodes.iter().map(|(hash, node)| {
+            let mut node_bytes = Vec::new();
+            node_bytes.extend_from_slice(hash);
+            node_bytes.extend_from_slice(&node.into_bytes());
+            node_bytes
+        });
+        let nodes_bytes = astro_format::encode(nodes_iter).unwrap_or_else(|_| Vec::new());
+
+        // Create parents bytes
+        let parents_iter = self.parents.iter().map(|(child_hash, parent_hash)| {
+            let mut parent_bytes = Vec::new();
+            parent_bytes.extend_from_slice(child_hash);
+            parent_bytes.extend_from_slice(parent_hash);
+            parent_bytes
+        });
+        let parents_bytes = astro_format::encode(parents_iter).unwrap_or_else(|_| Vec::new());
+
+        // Append encoded nodes and parents bytes to the result
+        result.extend_from_slice(&nodes_bytes);
+        result.extend_from_slice(&parents_bytes);
+
+        result
+    }
+}
+
 impl<T> MerkleTree<T> where T: IntoBytes + Clone {
     fn update_hash(mut self, mut old_hash: [u8; 32], mut new_hash: [u8; 32]) {
         while let Some(parent_hash) = self.parents.remove(&new_hash) {
@@ -161,5 +196,29 @@ impl<T> MerkleNode<T> where T: IntoBytes, {
             }
              blake_3(&concatenated_hashes)
         }
+    }
+}
+
+impl<T> IntoBytes for MerkleNode<T>
+where
+    T: IntoBytes
+{
+    fn into_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // Determine data flag byte
+        let flag: u8 = if self.data.is_some() { 1 } else { 0 };
+        bytes.push(flag);
+
+        // Append data bytes or joined children hashes
+        if let Some(ref data) = self.data {
+            bytes.extend_from_slice(&data.into_bytes());
+        } else {
+            for child_hash in &self.children {
+                bytes.extend_from_slice(child_hash);
+            }
+        }
+
+        bytes
     }
 }
