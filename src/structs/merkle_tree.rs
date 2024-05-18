@@ -13,28 +13,22 @@ pub struct MerkleTree<T> {
 
 impl<T> MerkleTree<T> where T: IntoBytes + Clone {
     fn update_hash(mut self, mut old_hash: [u8; 32], mut new_hash: [u8; 32]) {
-
         while let Some(parent_hash) = self.parents.remove(&new_hash) {
             if let Some(mut parent_node) = self.nodes.remove(&parent_hash) {
                 // Replace old hash in parent with the new hash
                 if let Some(pos) = parent_node.children.iter().position(|&hash| hash == old_hash) {
                     parent_node.children[pos] = new_hash;
                 }
-
                 // Get new hash for parent
                 let new_parent_hash = parent_node.calculate_hash();
-
                 // Change parent key in nodes
                 self.nodes.insert(new_parent_hash, parent_node);
-
                 // Change parent relationships
                 if let Some(grandparent_hash) = self.parents.remove(&parent_hash) {
                     self.parents.insert(new_parent_hash, grandparent_hash);
                 }
-
                 // Remove old relationships
                 self.parents.insert(new_hash, new_parent_hash);
-
                 // Move to the next node up the tree
                 old_hash = parent_hash;
                 new_hash =new_parent_hash;
@@ -47,20 +41,16 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
             children: vec![],
             data: Some(data),
         };
-
         // Calculate the hash of the new node
         let new_node_hash = new_node.calculate_hash();
-
         // Add the new node to the nodes map
         self.nodes.insert(new_node_hash, new_node);
-
         // Add node hash to parent(if lasts parent has 2 children create a new parent)
         let mut current_right_hash = self.root;
-
+        // Find the right most end node
         while let Some(last_child_hash) = self.nodes.get(&current_right_hash).and_then(|node| node.children.last()) {
             current_right_hash = *last_child_hash;
         }
-
         // If the tree is empty, set the root to the new node
         if current_right_hash == [0; 32] {
             self.root = new_node_hash;
@@ -75,7 +65,6 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
                         children: vec![new_node_hash],
                         data: None,
                     };
-
                     let new_parent_node_hash = new_parent_node.calculate_hash();
                     // Add new parent node to the tree
                     self.nodes.insert(new_parent_node_hash, new_parent_node);
@@ -97,8 +86,58 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
             }
         }
     }
-    // pub fn replace(self, index: usize) {
-    // }
+    pub fn replace(mut self, index: usize, data: T) {
+        // traverse the tree to find the hash of the old node
+        let mut height = 0;
+        let mut lowest_hash = self.root;
+
+        while let Some(child_node) = self.nodes.get(&lowest_hash) {
+            match child_node.children.first() {
+                Some(res) => {
+                    lowest_hash = *res;
+                    height += 1;
+                },
+                None => break,
+            }
+        }
+        // find the old hash using the height and index
+        let mut old_hash = self.root;
+        let mut idx = index;
+        let mut range_start = 0;
+        let mut range_end = 2usize.pow(height as u32);
+
+        for _ in 0..height {
+            let mid = (range_start + range_end) / 2;
+            if idx < mid {
+                range_end = mid;
+            } else {
+                range_start = mid;
+                idx -= mid;
+            }
+
+            if let Some(current_node) = self.nodes.get(&old_hash) {
+                old_hash = current_node.children[(idx >= mid) as usize];
+            }
+        }
+        // create a new node
+        let new_node: MerkleNode<T> = MerkleNode {
+            data: Some(data.clone()),
+            children: vec![]
+        };
+        // calculate the hash of the new node
+        let new_hash = new_node.calculate_hash();
+        // add the new node to the tree
+        self.nodes.insert(new_hash, new_node);
+        // get the parent of the old node with remove and update the parents
+        match self.parents.remove(&old_hash) {
+            Some(parent_hash) => {
+                self.parents.insert(new_hash, parent_hash);
+            },
+            None => todo!(),
+        }
+        // update the tree hash
+        self.update_hash(old_hash, new_hash);
+    }
     // pub fn insert(self, index: usize) {
     // }
     // pub fn remove(self, index: usize) {
