@@ -91,6 +91,8 @@ IntoBytes: Provides functionality to serialize RadixTree and RadixNode into byte
 
 **Methods**
 
+`new()`: Creates a new instance of MerkleTree.
+`hash(&self)`: Returns the root of the Merkle Tree.
 `append(mut self, data: T)`: Appends data to the Merkle Tree.
 `replace(mut self, index: usize, data: T)`: Replaces the data at the specified index in the Merkle Tree.
 
