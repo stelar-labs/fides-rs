@@ -79,6 +79,33 @@ IntoBytes: Provides functionality to serialize RadixTree and RadixNode into byte
 
 `into_bytes(&self) -> Vec<u8>`: Serializes the entire RadixTree into a byte vector. This process involves serializing the root and each node in nodes (using RadixNode's into_bytes method).
 
+
+### Merkle Tree
+
+**Structs**
+
+`MerkleTree<T>`: Represents the Merkle Tree, generic over T for the data stored in each node.
+- `nodes`: `HashMap<[u8; 32], MerkleNode<T>>` storing the nodes of the tree, each identified by a 32-byte array.
+- `root`: `[u8; 32]` representing the root node.
+- `parents`: `HashMap<[u8; 32], [u8; 32]>` tracking the parent of each node.
+
+**Methods**
+
+`append(mut self, data: T)`: Appends data to the Merkle Tree.
+`replace(mut self, index: usize, data: T)`: Replaces the data at the specified index in the Merkle Tree.
+
+**Traits**
+
+IntoBytes: Provides functionality to serialize MerkleTree and MerkleNode into bytes.
+
+- For MerkleTree<T>: `into_bytes(&self) -> Vec<u8>`
+- For MerkleNode<T>: `into_bytes(&self) -> Vec<u8>`
+
+TryFromBytes: Provides functionality to deserialize MerkleTree and MerkleNode from bytes.
+
+- For MerkleTree<T>: `try_from_bytes(value: &[u8]) -> Result<Self, Box<dyn Error>>`
+- For MerkleNode<T>: `try_from_bytes(value: &[u8]) -> Result<Self, Box<dyn Error>>`
+
 ## Future
 
 - 🎲 Random Number Generator
