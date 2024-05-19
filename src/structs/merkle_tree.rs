@@ -93,6 +93,13 @@ where
 }
 
 impl<T> MerkleTree<T> where T: IntoBytes + Clone {
+    pub fn new() -> Self {
+        MerkleTree {
+            nodes: HashMap::new(),
+            root: [0u8; 32],
+            parents: HashMap::new(),
+        }
+    }
     fn update_hash(mut self, mut old_hash: [u8; 32], mut new_hash: [u8; 32]) {
         while let Some(parent_hash) = self.parents.remove(&new_hash) {
             if let Some(mut parent_node) = self.nodes.remove(&parent_hash) {
