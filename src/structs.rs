@@ -10,3 +10,4 @@ pub struct BloomFilter {
 }
 
 pub use crate::structs::radix_tree::RadixTree;
+pub use crate::structs::merkle_tree::MerkleTree;
