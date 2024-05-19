@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use astro_format::IntoBytes;
+use astro_format::{IntoBytes, TryFromBytes};
 
 use crate::hash::blake_3;
 
@@ -43,6 +43,52 @@ where
         result.extend_from_slice(&parents_bytes);
 
         result
+    }
+}
+
+impl<'a, T> TryFromBytes<'a> for MerkleTree<T>
+where
+    T: TryFromBytes<'a>
+{
+    fn try_from_bytes(value: &'a [u8]) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut offset = 0;
+        // Extract root
+        let mut root = [0u8; 32];
+        root.copy_from_slice(&value[offset..offset + 32]);
+        offset += 32;
+        // Use decode to get the nodes and parents buffer
+        let buffers: Vec<&[u8]> = astro_format::decode(&value[offset..])?;
+        let nodes_buffer = buffers.get(0).ok_or("missing nodes buffer")?;
+        let parents_buffer = buffers.get(1).ok_or("missing parents buffer")?;
+        // Decode the nodes using astro_format
+        let nodes_bytes: Vec<&[u8]> = astro_format::decode(nodes_buffer)?;
+        let mut nodes = HashMap::new();
+        for node_bytes in nodes_bytes {
+            let hash = {
+                let mut hash = [0u8; 32];
+                hash.copy_from_slice(&node_bytes[0..32]);
+                hash
+            };
+            let node = MerkleNode::<T>::try_from_bytes(&node_bytes[32..])?;
+            nodes.insert(hash, node);
+        }
+        // Decode parents
+        let parents_bytes: Vec<&[u8]> = astro_format::decode(parents_buffer)?;
+        let mut parents = HashMap::new();
+        for parent_bytes in parents_bytes {
+            let child_hash = {
+                let mut hash = [0u8; 32];
+                hash.copy_from_slice(&parent_bytes[0..32]);
+                hash
+            };
+            let parent_hash = {
+                let mut hash = [0u8; 32];
+                hash.copy_from_slice(&parent_bytes[32..64]);
+                hash
+            };
+            parents.insert(child_hash, parent_hash);
+        }
+        Ok(MerkleTree { nodes, root, parents })
     }
 }
 
@@ -220,5 +266,40 @@ where
         }
 
         bytes
+    }
+}
+
+impl<'a, T> TryFromBytes<'a> for MerkleNode<T>
+where
+    T: TryFromBytes<'a>
+{
+    fn try_from_bytes(value: &'a [u8]) -> Result<Self, Box<dyn std::error::Error>> {
+        if value.is_empty() {
+            return Err("Input bytes are empty".into());
+        }
+        // Read the flag byte
+        let flag = value[0];
+        let mut offset = 1;
+        // Parse data based on the flag
+        let data = if flag == 1 {
+            let data = T::try_from_bytes(&value[offset..])?;
+            Some(data)
+        } else {
+            None
+        };
+        // Parse children hashes if flag is 0
+        let children = if flag == 0 {
+            let mut children = Vec::new();
+            while offset + 32 <= value.len() {
+                let mut hash = [0u8; 32];
+                hash.copy_from_slice(&value[offset..offset + 32]);
+                children.push(hash);
+                offset += 32;
+            }
+            children
+        } else {
+            Vec::new()
+        };
+        Ok(MerkleNode { children, data })
     }
 }
