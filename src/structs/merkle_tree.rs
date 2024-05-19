@@ -119,8 +119,12 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
                 self.parents.insert(new_hash, new_parent_hash);
                 // Move to the next node up the tree
                 old_hash = parent_hash;
-                new_hash =new_parent_hash;
+                new_hash = new_parent_hash;
             }
+        }
+        // Update root if it was changed
+        if old_hash == self.root {
+            self.root = new_hash;
         }
     }
     pub fn append(mut self, data: T) {
