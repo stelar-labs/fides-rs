@@ -6,9 +6,11 @@ use crate::hash::blake_3;
 
 #[derive(Debug,Clone)]
 pub struct MerkleTree<T> {
+    height: usize,
     nodes: HashMap<[u8;32], MerkleNode<T>>,
+    parents: HashMap<[u8;32], [u8;32]>,
     root: [u8;32],
-    parents: HashMap<[u8; 32], [u8; 32]>,
+    width: usize,
 }
 
 impl<T> IntoBytes for MerkleTree<T>
@@ -19,6 +21,12 @@ where
         // Create a result vector starting with the root
         let mut result = Vec::new();
         result.extend_from_slice(&self.root);
+
+        // Append height bytes as u64 in little endian
+        result.extend_from_slice(&(self.height as u64).to_le_bytes());
+
+        // Append width bytes as u64 in little endian
+        result.extend_from_slice(&(self.width as u64).to_le_bytes());
 
         // Create nodes bytes
         let nodes_iter = self.nodes.iter().map(|(hash, node)| {
@@ -56,6 +64,15 @@ where
         let mut root = [0u8; 32];
         root.copy_from_slice(&value[offset..offset + 32]);
         offset += 32;
+
+        // Extract height
+        let height = u64::from_le_bytes(value[offset..offset + 8].try_into()?) as usize;
+        offset += 8;
+
+        // Extract width
+        let width = u64::from_le_bytes(value[offset..offset + 8].try_into()?) as usize;
+        offset += 8;
+
         // Use decode to get the nodes and parents buffer
         let buffers: Vec<&[u8]> = astro_format::decode(&value[offset..])?;
         let nodes_buffer = buffers.get(0).ok_or("missing nodes buffer")?;
@@ -88,22 +105,24 @@ where
             };
             parents.insert(child_hash, parent_hash);
         }
-        Ok(MerkleTree { nodes, root, parents })
+        Ok(MerkleTree { height, nodes, root, parents, width })
     }
 }
 
 impl<T> MerkleTree<T> where T: IntoBytes + Clone {
     pub fn new() -> Self {
         MerkleTree {
+            height: 0,
             nodes: HashMap::new(),
-            root: [0u8; 32],
             parents: HashMap::new(),
+            root: [0u8;32],
+            width: 0,
         }
     }
     pub fn hash(&self) -> [u8;32] {
         self.root
     }
-    fn update_hash(mut self, mut old_hash: [u8; 32], mut new_hash: [u8; 32]) {
+    fn update_hash(&mut self, mut old_hash: [u8; 32], mut new_hash: [u8; 32]) {
         while let Some(parent_hash) = self.parents.remove(&new_hash) {
             if let Some(mut parent_node) = self.nodes.remove(&parent_hash) {
                 // Replace old hash in parent with the new hash
@@ -130,7 +149,7 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
             self.root = new_hash;
         }
     }
-    pub fn append(mut self, data: T) {
+    pub fn append(&mut self, data: T) {
         // Create a new leaf node
         let new_node = MerkleNode {
             children: vec![],
@@ -140,35 +159,70 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
         let new_node_hash = new_node.calculate_hash();
         // Add the new node to the nodes map
         self.nodes.insert(new_node_hash, new_node);
-        // Add node hash to parent(if lasts parent has 2 children create a new parent)
-        let mut current_right_hash = self.root;
-        // Find the right most end node
-        while let Some(last_child_hash) = self.nodes.get(&current_right_hash).and_then(|node| node.children.last()) {
-            current_right_hash = *last_child_hash;
-        }
+
         // If the tree is empty, set the root to the new node
-        if current_right_hash == [0; 32] {
-            self.root = new_node_hash;
+        if self.width == 0 {
+            let new_root = MerkleNode {
+                children: vec![new_node_hash],
+                data: None,
+            };
+            let new_root_hash = new_root.calculate_hash();
+            self.nodes.insert(new_root_hash, new_root);
+            // Add new root as the parent of the new node
+            self.parents.insert(new_node_hash, new_root_hash);
+            // Set the new root
+            self.root = new_root_hash;
+            // Increase height
+            self.height += 1
         } else {
-            // Add the new node to the rightmost parent or create a new parent
-            let parent_hash = self.parents.get(&current_right_hash).cloned().unwrap_or(self.root);
-            if let Some(parent_node) = self.nodes.get_mut(&parent_hash) {
-                
-                if parent_node.children.len() > 1 {
-                    // Create a new parent node
-                    let new_parent_node: MerkleNode<T> = MerkleNode {
-                        children: vec![new_node_hash],
+            // If the width equals 2^height:
+            if self.width == (1 << self.height) {
+                // Increase height
+                self.height += 1;
+
+                // Create a new root node
+                let old_root = self.root;
+                let mut new_root = MerkleNode {
+                    children: vec![old_root],
+                    data: None,
+                };
+
+                // Create the second root branch
+                let mut current_hash = new_node_hash;
+
+                // Start from the bottom with the new node and climb up to the root
+                for _ in 0..(self.height - 1) {
+                    let intermediate_node = MerkleNode {
+                        children: vec![current_hash],
                         data: None,
                     };
-                    let new_parent_node_hash = new_parent_node.calculate_hash();
-                    // Add new parent node to the tree
-                    self.nodes.insert(new_parent_node_hash, new_parent_node);
-                    // Add parent relationships
-                    self.parents.insert(current_right_hash, new_parent_node_hash);
-                    self.parents.insert(new_node_hash, new_parent_node_hash);
-                    // Update hashes 
-                    self.update_hash(parent_hash, new_parent_node_hash)
-                } else {
+                    let intermediate_hash = intermediate_node.calculate_hash();
+                    self.nodes.insert(intermediate_hash, intermediate_node);
+                    self.parents.insert(current_hash, intermediate_hash);
+                    current_hash = intermediate_hash;
+                }
+
+                new_root.children.push(current_hash);
+                let new_root_hash = new_root.calculate_hash();
+                self.nodes.insert(new_root_hash, new_root);
+
+                // Add new root as the parent of the old root
+                self.parents.insert(old_root, new_root_hash);
+
+                // Add new root as the parent of the second branch
+                self.parents.insert(current_hash, new_root_hash);
+
+                // Set the new root
+                self.root = new_root_hash;
+            } else {
+                let mut current_right_hash = self.root;
+                // Find the right most end node
+                while let Some(last_child_hash) = self.nodes.get(&current_right_hash).and_then(|node| node.children.last()) {
+                    current_right_hash = *last_child_hash;
+                }
+                // Add the new node to the rightmost parent
+                let parent_hash = self.parents.get(&current_right_hash).cloned().unwrap_or(self.root);
+                if let Some(parent_node) = self.nodes.get_mut(&parent_hash) {
                     // Add the new node as a child of the current parent node
                     parent_node.children.push(new_node_hash);
                     // Add parent relationship
@@ -176,25 +230,26 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
                     // Recalculate the parent hash
                     let new_parent_hash = parent_node.calculate_hash();
                     // Update hashes
-                    self.update_hash(parent_hash, new_parent_hash)
+                    self.update_hash(parent_hash, new_parent_hash);
                 }
             }
         }
+        self.width += 1;
     }
     pub fn replace(mut self, index: usize, data: T) {
         // traverse the tree to find the hash of the old node
-        let mut height = 0;
-        let mut lowest_hash = self.root;
+        let height = self.height;
+        // let mut lowest_hash = self.root;
 
-        while let Some(child_node) = self.nodes.get(&lowest_hash) {
-            match child_node.children.first() {
-                Some(res) => {
-                    lowest_hash = *res;
-                    height += 1;
-                },
-                None => break,
-            }
-        }
+        // while let Some(child_node) = self.nodes.get(&lowest_hash) {
+        //     match child_node.children.first() {
+        //         Some(res) => {
+        //             lowest_hash = *res;
+        //             height += 1;
+        //         },
+        //         None => break,
+        //     }
+        // }
         // find the old hash using the height and index
         let mut old_hash = self.root;
         let mut idx = index;
