@@ -236,7 +236,7 @@ impl<T> MerkleTree<T> where T: IntoBytes + Clone {
         }
         self.width += 1;
     }
-    pub fn replace(mut self, index: usize, data: T) {
+    pub fn replace(&mut self, index: usize, data: T) {
         // traverse the tree to find the hash of the old node
         let height = self.height;
         // let mut lowest_hash = self.root;
